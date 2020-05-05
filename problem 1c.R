@@ -14,7 +14,7 @@ mean_vector <-  c(0.02,0.08) #mean, different for p0 and p1
 beta_0 <- 1 #intital guess
 possible_neigh <- matrix(nrow=n,ncol=8)
 for (i in (1:n)) {
-  possible_neigh[i,] <- c(i-1,i+1,i-dim,i+dim,i+1+dim,i+1-dim,i+dim-1,i-dim-1)
+  possible_neigh[i,] <- c(i-dim-1,i-dim,i-dim+1,i-1,i+1,i+dim-1,i+dim,i+dim+1)
 }
 current_l <- complit_vec #initial value in the grid
 
@@ -33,9 +33,26 @@ accept_change <- function(p_new,p_old) {
 
 find_neighbours <- function(i,dim,n) {
   valid_neigh <- vector()
+  valid <- rep(TRUE,8)
   possible <- possible_neigh[i,]
+  if (i < dim+1) { #bottom
+    valid[1:3] <-FALSE
+  }
+  if (i > dim^dim-dim) { #top
+    valid[6:8] <- FALSE
+  }
+  if (i %% dim == 1) { #left
+    valid[1] <- FALSE
+    valid[4] <- FALSE
+    valid[6] <- FALSE
+  }
+  if (i %% dim == 0) { #right
+    valid[3] <- FALSE
+    valid[5] <- FALSE
+    valid[7] <- FALSE
+  }
   for (j in (1:8)) {
-    if (possible[j] > 0 && possible[j] < n) { #checks if in domain
+    if (valid[j]) {
       valid_neigh <- append(valid_neigh,possible[j])
     }
   }
