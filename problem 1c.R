@@ -6,7 +6,7 @@ complit_matrix <- as.matrix(complit)
 complit_vec = as.vector(t(complit_matrix))
 dim <- 66 #dimension of square matrix
 n <- length(complit_vec) #length of l-vector
-M <- 100 #number of iteration
+M <- 1000 #number of iteration
 MCMC_output <- matrix(0,nrow=n,ncol=M) 
 convergence_vector <- replicate(M,0) 
 sigma <- 0.06 #standard deviation
@@ -91,9 +91,13 @@ logbeta <- function(beta) {
   p_d_l <- pdl_func(current_l,n,mean_vector,sigma,beta)
   totalsum <- 0
   for (i in (1:n)) {  #adds contributions node-wise
-    number_neigh <- evaluate_neigbours(i,dim,n,current_l)
-    totalsum <- totalsum + log(p_d_l[i,2])+log(p_d_l[i,1]) +
-      (number_neigh[1] + number_neigh[2])*log(beta) #number of neighbours
+    number_neigh <- evaluate_neigbours(i,dim,n,current_l) #number of 1 and 0 neigbours
+    if (current_l[i]==1) {
+      totalsum <- totalsum + log(p_d_l[i,2]) + number_neigh[1]*log(beta)
+    }
+    else {
+      totalsum <- totalsum + log(p_d_l[i,1]) + number_neigh[2]*log(beta)
+    } 
   }
   return (totalsum)
 }
@@ -139,16 +143,19 @@ one_step <- function(node_change,current_l,mean,sigma,beta) {
           current_l[node] <- 1 #change value to 1
       }
       p_d_l <- pdl_onenode(current_l,n,mean_vector,sigma,beta,node,p_d_l) #updates current probabilities
-      p_old_vec <- find_p_old(current_l,p_d_l,n)
-      p_old <- sum(p_old_vec)
+      #p_old_vec <- find_p_old(current_l,p_d_l,n)
+      #p_old <- sum(p_old_vec)
     }
   }
   my_list <- list("grid" = current_l, "changes" = number_of_changes)
   return (my_list)
 }
 ######PROCEDURE#######
-
-beta <- optim(10^4, logbeta, method = 'Brent', upper = 10^10, lower = 10^1)#estimated value of beta
+current_l <- complit_vec
+beta <- optim(par=10^3, logbeta, method = 'Brent', upper = 10^15, 
+              lower = 10^(-5))
+beta <- beta$par#estimated value of beta
+beta
 # THIS ONE IS WRONG
 
 current_l <- complit_vec #initial value in the grid
@@ -157,12 +164,12 @@ for (j in (1:M)) { #MCMC-sampling (M steps)
   print("Step")
   print(j)
   node_change <-round(n*runif(1)) #draws random node
-  step <- one_step(node_change,current_l,mean,sigma,1) #perform one step
+  step <- one_step(node_change,current_l,mean,sigma,0.01) #perform one step
   current_l <- step$grid #updates the grid
   convergence_vector[j] <- step$changes
   #MCMC_output[,j] <- current_l #stores current value in column
 }
-plot(seq(1, M),convergence_vector,type='l',main="Changes in each iteration"
+plot(seq(1, 400),convergence_vector[1:400],type='l',main="Changes in each iteration"
      , xlab = "Iteration number", ylab="Changes") #plots convergence
 final_l <- current_l # saves converges output
 
