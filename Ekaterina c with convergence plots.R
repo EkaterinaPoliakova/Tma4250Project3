@@ -221,7 +221,7 @@ possible_neigh=Compute_possible_neighours(length(current_l))
 n=length(current_l)
 
 #convergence_vector <- replicate(M,0) 
-M=75000
+M=70000
 Sand_proportion=matrix(nrow=M,ncol=6,data=0)
 for (j in (1:M)) { #MCMC-sampling (M steps)
   if(j %% 1000 ==0) print(paste("Step",j))
@@ -255,15 +255,8 @@ pdf(paste("Convergence_plot",i,".pdf"), width = 4, height = 4)
 plot(1:M,Sand_proportion[1:M,i],type='l',xlab="Markov step",ylab="Proportion of sand",main=paste("Realization",i))
 dev.off()
 
-obs_matrix <- matrix (0,nrow=6,ncol=n)
-for (j in (1:500)) { #MCMC-sampling (M steps)
-  if(j %% 100 ==0) print(paste("Step",j))
-  node_change <-round(n*runif(1)+0.5) #draws random node, avoid "node Nr 0"
-  current_l <- one_step(node_change,current_l,mean,sigma,beta)  #updates the grid
-  obs_matrix[j,]  <- current_l 
-}
-  mean_posterior <- colMeans(obs_matrix) #n-dimensional mean vector
+mean_posterior <- rowMeans(obs_matrix) #n-dimensional mean vector
 #Then ggplot mean_posterior
 
-variance_posterior <- var(obs_matrix) #variance of each node
+variance_posterior <- mean_posterior*(1-mean_posterior) #variance of each node
 #Then ggplot variance_posterior
